@@ -1,0 +1,136 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jul 31 15:26:45 2025
+
+@author: mi0025
+"""
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import spearmanr
+
+#  Load the dataset
+file_path = ''  # Update with your correct path
+data = pd.read_csv(file_path)
+
+#  Define the variable categories
+theme_1_columns = ['H_mental', 'H_dia', 'H_health', 'H_hypertension', 'H_NoInsurance', 'H_kidney']
+theme_2_columns = [ 'MedianAge', 
+                   'PercentWithoutDiploma', 'UnemploymentPercentage', 'PercentBelowPovertyLevel', 
+                   'D_fertility', 'pop18', 'D_disability', 'pop65','perCapitaIncome']
+theme_3_columns = ['Householdswithoneormorepeopleunder18', 'LackingCompletePlumbingFacilities', 
+                   'RenterOccupied', 'CrowdedHouseholdPercentage', 'HousesBuiltBefore2000', 
+                   'SingleParentHousehold']
+inverse_rank_columns = ['PerCapitaIncome']  # Higher values mean lower vulnerability
+
+#  Rank variables appropriately
+for column in data.columns:
+    if column in inverse_rank_columns:
+        data[column + '_rank'] = data[column].rank(ascending=False)
+    elif column in theme_1_columns + theme_2_columns + theme_3_columns:
+        data[column + '_rank'] = data[column].rank(ascending=True)
+
+#  Compute percentile ranks
+N = data.shape[0]
+for column in data.columns:
+    if '_rank' in column:
+        data[column + '_percentile'] = (data[column] - 1) / (N - 1)
+
+#  Calculate theme-based SVI scores
+data['Theme_1_Percentile_Sum'] = data[[col + '_rank_percentile' for col in theme_1_columns]].sum(axis=1)
+data['Theme_2_Percentile_Sum'] = data[[col + '_rank_percentile' for col in theme_2_columns]].sum(axis=1)
+data['Theme_3_Percentile_Sum'] = data[[col + '_rank_percentile' for col in theme_3_columns]].sum(axis=1)
+
+#  Compute the Overall SVI Score
+data['Overall_Percentile_Rank'] = data[['Theme_1_Percentile_Sum', 'Theme_2_Percentile_Sum', 'Theme_3_Percentile_Sum']].sum(axis=1)
+
+#  Extract Top 20 Counties
+svi_data_sorted = data.sort_values(by='Overall_Percentile_Rank', ascending=False)
+top_20_df = svi_data_sorted.head(20).copy()
+top_20_df['Original_Rank'] = range(1, 21)
+
+#  Display the initial results
+print("\nTop 20 Most Vulnerable Counties:")
+print(top_20_df[['FIPS', 'Overall_Percentile_Rank', 'Original_Rank']])
+
+#  Function for Sensitivity Analysis
+def sensitivity_analysis_remove_variable(data, variable):
+    """Recomputes SVI by removing one variable at a time."""
+    temp_df = data.copy()
+
+    # Identify the theme of the variable
+    if variable in theme_1_columns:
+        theme = 'Theme_1_Percentile_Sum'
+    elif variable in theme_2_columns:
+        theme = 'Theme_2_Percentile_Sum'
+    elif variable in theme_3_columns:
+        theme = 'Theme_3_Percentile_Sum'
+    else:
+        return None
+
+    # Recalculate the theme SVI without the selected variable
+    temp_df[theme] = temp_df[theme] - temp_df[variable + '_rank_percentile']
+
+    # Recalculate Overall SVI
+    temp_df['New_Overall_Percentile_Rank'] = temp_df[['Theme_1_Percentile_Sum', 'Theme_2_Percentile_Sum', 'Theme_3_Percentile_Sum']].sum(axis=1)
+
+    # Sort the data again
+    temp_df = temp_df.sort_values(by='New_Overall_Percentile_Rank', ascending=False).reset_index(drop=True)
+    temp_df['New_Rank'] = range(1, len(temp_df) + 1)
+
+    # Extract the new ranks for Top 20 Counties
+    return temp_df[['FIPS', 'New_Rank']]
+
+#  Run Sensitivity Analysis for Each Variable
+results = []
+for variable in theme_1_columns + theme_2_columns + theme_3_columns:
+    temp_ranks = sensitivity_analysis_remove_variable(data, variable)
+    if temp_ranks is not None:
+        temp_ranks = top_20_df[['FIPS', 'Original_Rank']].merge(temp_ranks, on='FIPS', how='left')
+        temp_ranks['Variable_Removed'] = variable
+        results.append(temp_ranks)
+
+#  Combine all results into one DataFrame
+sensitivity_results = pd.concat(results, ignore_index=True)
+
+#  Compute Spearman Correlation for each variable
+correlation_results = sensitivity_results.groupby('Variable_Removed').apply(
+    lambda df: spearmanr(df['Original_Rank'], df['New_Rank'])[0]
+).reset_index()
+correlation_results.columns = ['Variable_Removed', 'Spearman_Correlation']
+
+#  Display sensitivity results
+print("\nVariable-Level Sensitivity Analysis Results:")
+print(sensitivity_results.head())
+
+print("\nSpearman Correlation by Variable:")
+print(correlation_results)
+
+#  Plot: Spearman Correlation by Variable
+plt.figure(figsize=(12, 6))
+sns.barplot(y='Variable_Removed', x='Spearman_Correlation', data=correlation_results, palette='viridis')
+plt.xlabel("Spearman Correlation")
+plt.ylabel("Variable Removed")
+plt.title("Impact of Removing Each Variable on Top 20 SVI Rankings")
+plt.xlim(0, 1)
+plt.grid(axis='x', linestyle='--', alpha=0.6)
+plt.show()
+
+# Plot: Ranking Changes for Top 5 Most Impacted Variables
+top_impact_vars = correlation_results.nsmallest(5, 'Spearman_Correlation')['Variable_Removed'].tolist()
+filtered_results = sensitivity_results[sensitivity_results['Variable_Removed'].isin(top_impact_vars)]
+
+plt.figure(figsize=(14, 7))
+sns.boxplot(x='Variable_Removed', y='New_Rank', data=filtered_results, palette='coolwarm')
+plt.xlabel("Variable Removed")
+plt.ylabel("New Rank After Removal")
+plt.title("Ranking Changes for Top 5 Most Impacted Variables")
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.show()
+
+#  Print correlation results
+print("\nSpearman Correlation Coefficients (Higher = More Stable Ranking):")
+for index, row in correlation_results.iterrows():
+    print(f"{row['Variable_Removed']}: {row['Spearman_Correlation']:.4f}")

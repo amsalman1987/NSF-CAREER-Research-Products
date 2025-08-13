@@ -1,0 +1,295 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Mar  1 23:49:47 2025
+
+@author: mi0025
+"""
+
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.decomposition import PCA
+from factor_analyzer import Rotator
+from scipy.stats import spearmanr
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read the Excel file
+file_path = ''
+df = pd.read_csv(file_path)
+
+# Classify columns according to themes
+theme_1_columns = ['H_mental', 'H_dia', 'H_health', 'H_hypertension', 'H_NoInsurance', 'H_kidney']
+theme_2_columns = [ 'MedianAge', 
+                   'PercentWithoutDiploma', 'UnemploymentPercentage', 'PercentBelowPovertyLevel', 
+                   'D_fertility', 'pop18', 'D_disability', 'pop65','PerCapitaIncome']
+theme_3_columns = ['Householdswithoneormorepeopleunder18', 'LackingCompletePlumbingFacilities', 
+                   'RenterOccupied', 'CrowdedHouseholdPercentage', 'HousesBuiltBefore2000', 
+                   'SingleParentHousehold']
+
+# Columns to calculate complements for themes
+theme_1_complement_columns = []
+theme_2_complement_columns = ['PerCapitaIncome']
+theme_3_complement_columns = []
+
+# Ensure the 'COUNTY' column is included
+county_column = ['FIPS']
+
+# Function to normalize data
+def normalize(df, columns):
+    df[columns] = df[columns].astype(float)
+    scaler = MinMaxScaler()
+    df.loc[:, columns] = scaler.fit_transform(df.loc[:, columns])
+    return df
+
+# Function to calculate complements and update normalized data
+def apply_complements(df, complement_columns):
+    if complement_columns:
+        df.loc[:, complement_columns] = 1 - df.loc[:, complement_columns]
+    return df
+
+# Create and normalize separate DataFrames for each theme
+theme_1_df = df[county_column + theme_1_columns].copy()
+theme_2_df = df[county_column + theme_2_columns].copy()
+theme_3_df = df[county_column + theme_3_columns].copy()
+
+# Normalize and apply complements for each theme
+theme_1_df = normalize(theme_1_df, theme_1_columns)
+theme_1_df = apply_complements(theme_1_df, theme_1_complement_columns)
+
+theme_2_df = normalize(theme_2_df, theme_2_columns)
+theme_2_df = apply_complements(theme_2_df, theme_2_complement_columns)
+
+theme_3_df = normalize(theme_3_df, theme_3_columns)
+theme_3_df = apply_complements(theme_3_df, theme_3_complement_columns)
+
+# Function to perform PCA
+def perform_pca(df, columns, theme_name):
+    pca = PCA()
+    principal_components = pca.fit_transform(df[columns])
+    pca_df = pd.DataFrame(data=principal_components, columns=[f'PC{i+1}' for i in range(principal_components.shape[1])])
+    explained_variance_ratio = pca.explained_variance_ratio_
+    eigenvalues = pca.explained_variance_
+    loadings = pca.components_.T * np.sqrt(eigenvalues)
+    loadings_df = pd.DataFrame(loadings, index=columns, columns=[f'PC{i+1}' for i in range(loadings.shape[1])])
+    
+    # Select components that explain at least 85% variability
+    cumulative_variance = np.cumsum(explained_variance_ratio)
+    num_components = np.argmax(cumulative_variance >= 0.85) + 1
+    selected_variance_ratio = explained_variance_ratio[:num_components]
+    selected_eigenvalues = eigenvalues[:num_components]
+    selected_pca_df = pca_df.iloc[:, :num_components]
+    
+    # Calculate total variance explained by selected components
+    total_variance_selected = np.sum(selected_variance_ratio)
+    total_variance_percentage = total_variance_selected * 100
+
+    # Print results for PCA and selected components with theme name
+    print(f"\n{theme_name} - Initial Principal Components (All):")
+    print(pca_df)
+    print(f"\n{theme_name} - Initial Explained Variance Ratio (All):", explained_variance_ratio)
+    print(f"{theme_name} - Initial Eigenvalues (All):", eigenvalues)
+    print(f"{theme_name} - Number of Selected Components: {num_components}")
+    print(f"\n{theme_name} - Selected Principal Components:")
+    print(selected_pca_df)
+    print(f"{theme_name} - Selected Explained Variance Ratio:", selected_variance_ratio)
+    print(f"{theme_name} - Selected Eigenvalues:", selected_eigenvalues)
+    print(f"{theme_name} - Sum of Selected Variance Ratios: {total_variance_selected:.4f}")
+    print(f"{theme_name} - Percentage of Variance Explained by Selected Components: {total_variance_percentage:.2f}%")
+
+    return selected_pca_df, explained_variance_ratio, eigenvalues, loadings_df
+
+# Function to apply Varimax rotation with Kaiser normalization
+def apply_varimax_with_kaiser_normalization(loadings_df):
+    kaiser_normalized = loadings_df.div(np.sqrt((loadings_df**2).sum(axis=0)), axis=1)
+    rotator = Rotator(method='varimax')
+    rotated_loadings = rotator.fit_transform(kaiser_normalized)
+    scaling_factors = np.sqrt((loadings_df**2).sum(axis=0)).values
+    rotated_loadings = rotated_loadings * scaling_factors[:, np.newaxis]
+    rotated_loadings_df = pd.DataFrame(rotated_loadings, index=loadings_df.index, columns=loadings_df.columns)
+    return rotated_loadings_df
+
+# Function to calculate L2 norm for each principal component
+def calculate_l2_norm(pca_df):
+    l2_norms = np.linalg.norm(pca_df.values, axis=1)
+    return l2_norms
+
+# Function to perform Pareto ranking with the dominance criteria
+def pareto_ranking(norms_df, columns):
+    ranks = {}
+    rank = 1
+    remaining_counties = norms_df[['FIPS'] + columns].copy()
+    
+    while not remaining_counties.empty:
+        pareto_front = []
+        
+        for i, row in remaining_counties.iterrows():
+            county_dominated = False
+            
+            for j, other_row in remaining_counties.iterrows():
+                if i != j:
+                    if all(other_row[col] >= row[col] for col in columns) and any(other_row[col] > row[col] for col in columns):
+                        county_dominated = True
+                        break
+            
+            if not county_dominated:
+                pareto_front.append(row)
+        
+        for row in pareto_front:
+            ranks[row['FIPS']] = (rank, *row[columns].values)
+            remaining_counties = remaining_counties[remaining_counties['FIPS'] != row['FIPS']]
+        
+        rank += 1
+    
+    return ranks
+
+# Perform PCA for each theme
+theme_1_pca_df, theme_1_explained_variance, theme_1_eigenvalues, theme_1_loadings = perform_pca(theme_1_df, theme_1_columns, "Theme 1")
+theme_2_pca_df, theme_2_explained_variance, theme_2_eigenvalues, theme_2_loadings = perform_pca(theme_2_df, theme_2_columns, "Theme 2")
+theme_3_pca_df, theme_3_explained_variance, theme_3_eigenvalues, theme_3_loadings = perform_pca(theme_3_df, theme_3_columns, "Theme 3")
+
+# Apply Varimax rotation with Kaiser normalization to each theme
+theme_1_rotated_loadings = apply_varimax_with_kaiser_normalization(theme_1_loadings)
+theme_2_rotated_loadings = apply_varimax_with_kaiser_normalization(theme_2_loadings)
+theme_3_rotated_loadings = apply_varimax_with_kaiser_normalization(theme_3_loadings)
+
+# Calculate L2 norms for each theme's principal components
+theme_1_l2_norms = calculate_l2_norm(theme_1_pca_df)
+theme_2_l2_norms = calculate_l2_norm(theme_2_pca_df)
+theme_3_l2_norms = calculate_l2_norm(theme_3_pca_df)
+
+# Combine L2 norms into a single DataFrame
+l2_norms_df = pd.DataFrame({
+    'FIPS': df['FIPS'],
+    'Theme_1_L2': theme_1_l2_norms,
+    'Theme_2_L2': theme_2_l2_norms,
+    'Theme_3_L2': theme_3_l2_norms
+})
+
+# Get the Pareto rankings with modified dominance criteria
+pareto_ranks_all = pareto_ranking(l2_norms_df, ['Theme_1_L2', 'Theme_2_L2', 'Theme_3_L2'])
+pareto_ranks_1_2 = pareto_ranking(l2_norms_df, ['Theme_1_L2', 'Theme_2_L2'])
+pareto_ranks_1_3 = pareto_ranking(l2_norms_df, ['Theme_1_L2', 'Theme_3_L2'])
+pareto_ranks_2_3 = pareto_ranking(l2_norms_df, ['Theme_2_L2', 'Theme_3_L2'])
+pareto_ranks_1 = pareto_ranking(l2_norms_df, ['Theme_1_L2'])
+pareto_ranks_2 = pareto_ranking(l2_norms_df, ['Theme_2_L2'])
+pareto_ranks_3 = pareto_ranking(l2_norms_df, ['Theme_3_L2'])
+
+# Convert the ranks dictionaries to DataFrames for better readability
+pareto_ranks_dfs = {}
+pareto_ranks_dfs['All Themes'] = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in pareto_ranks_all.items()],
+                                              columns=['FIPS', 'Rank', 'Theme_1_L2', 'Theme_2_L2', 'Theme_3_L2']).sort_values(by='Rank')
+pareto_ranks_dfs['Theme 1 and 2'] = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in pareto_ranks_1_2.items()],
+                                                 columns=['FIPS', 'Rank', 'Theme_1_L2', 'Theme_2_L2']).sort_values(by='Rank')
+pareto_ranks_dfs['Theme 1 and 3'] = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in pareto_ranks_1_3.items()],
+                                                 columns=['FIPS', 'Rank', 'Theme_1_L2', 'Theme_3_L2']).sort_values(by='Rank')
+pareto_ranks_dfs['Theme 2 and 3'] = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in pareto_ranks_2_3.items()],
+                                                 columns=['FIPS', 'Rank', 'Theme_2_L2', 'Theme_3_L2']).sort_values(by='Rank')
+pareto_ranks_dfs['Theme 1'] = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in pareto_ranks_1.items()],
+                                           columns=['FIPS', 'Rank', 'Theme_1_L2']).sort_values(by='Rank')
+pareto_ranks_dfs['Theme 2'] = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in pareto_ranks_2.items()],
+                                           columns=['FIPS', 'Rank', 'Theme_2_L2']).sort_values(by='Rank')
+pareto_ranks_dfs['Theme 3'] = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in pareto_ranks_3.items()],
+                                           columns=['FIPS', 'Rank', 'Theme_3_L2']).sort_values(by='Rank')
+
+# Initialize the MinMaxScaler for normalization
+scaler = MinMaxScaler()
+
+# Loop through each Pareto rank DataFrame to calculate reversed and normalized ranks
+for theme_key, df in pareto_ranks_dfs.items():
+    df['Reversed Rank'] = df['Rank'].max() + 1 - df['Rank']
+    df['Normalized Reversed Rank'] = scaler.fit_transform(df[['Reversed Rank']])
+    pareto_ranks_dfs[theme_key] = df
+
+# Save all Pareto rank DataFrames to an Excel file with separate sheets
+output_file_path = 'Alllnormalized_pareto_ranks_revised_all_themestrial1.xlsx'
+with pd.ExcelWriter(output_file_path) as writer:
+    for theme_key, df in pareto_ranks_dfs.items():
+        df[['FIPS', 'Rank', 'Reversed Rank', 'Normalized Reversed Rank']].to_excel(writer, sheet_name=theme_key, index=False)
+
+# Function for leave-one-out sensitivity analysis
+def leave_one_out_analysis(theme_df, theme_columns, theme_name, original_ranks, top_n=20):
+    sensitivity_results = {}
+    
+    for column in theme_columns:
+        # Leave out one column
+        reduced_columns = [col for col in theme_columns if col != column]
+        
+        # Perform PCA on the reduced dataset
+        reduced_pca_df, _, _, _ = perform_pca(theme_df, reduced_columns, f"{theme_name} (without {column})")
+        
+        # Calculate L2 norms for the reduced PCA
+        reduced_l2_norms = calculate_l2_norm(reduced_pca_df)
+        
+        # Create a DataFrame for the reduced L2 norms
+        reduced_l2_norms_df = pd.DataFrame({
+            'FIPS': theme_df['FIPS'],
+            f'{theme_name}_L2': reduced_l2_norms
+        })
+        
+        # Get the Pareto rankings for the reduced dataset
+        reduced_ranks = pareto_ranking(reduced_l2_norms_df, [f'{theme_name}_L2'])
+        
+        # Convert the ranks to a DataFrame
+        reduced_ranks_df = pd.DataFrame([(county, rank) + tuple(values) for county, (rank, *values) in reduced_ranks.items()],
+                                        columns=['FIPS', 'Rank', f'{theme_name}_L2']).sort_values(by='Rank')
+        
+        # Focus on the top N counties from the original rankings
+        original_top_n = original_ranks.head(top_n)
+        reduced_top_n = reduced_ranks_df[reduced_ranks_df['FIPS'].isin(original_top_n['FIPS'])]
+        
+        # Merge the original and reduced rankings
+        merged_ranks = original_top_n[['FIPS', 'Rank']].merge(reduced_top_n[['FIPS', 'Rank']], on='FIPS', suffixes=('_original', '_reduced'))
+        
+        # Calculate Spearman correlation
+        spearman_corr, _ = spearmanr(merged_ranks['Rank_original'], merged_ranks['Rank_reduced'])
+        
+        # Store the results
+        sensitivity_results[column] = spearman_corr
+    
+    return sensitivity_results
+
+# Original rankings for each theme
+original_ranks_theme_1 = pareto_ranks_dfs['Theme 1']
+original_ranks_theme_2 = pareto_ranks_dfs['Theme 2']
+original_ranks_theme_3 = pareto_ranks_dfs['Theme 3']
+
+# Perform leave-one-out analysis for each theme
+sensitivity_theme_1 = leave_one_out_analysis(theme_1_df, theme_1_columns, "Theme 1", original_ranks_theme_1)
+sensitivity_theme_2 = leave_one_out_analysis(theme_2_df, theme_2_columns, "Theme 2", original_ranks_theme_2)
+sensitivity_theme_3 = leave_one_out_analysis(theme_3_df, theme_3_columns, "Theme 3", original_ranks_theme_3)
+
+# Print the sensitivity results
+print("Sensitivity Analysis for Theme 1:")
+print(sensitivity_theme_1)
+print("\nSensitivity Analysis for Theme 2:")
+print(sensitivity_theme_2)
+print("\nSensitivity Analysis for Theme 3:")
+print(sensitivity_theme_3)
+
+# Save the sensitivity results to an Excel file
+sensitivity_output_file_path = 'sensitivity_analysis_revised_results.xlsx'
+with pd.ExcelWriter(sensitivity_output_file_path) as writer:
+    pd.DataFrame(list(sensitivity_theme_1.items()), columns=['Variable', 'Spearman Correlation']).to_excel(writer, sheet_name='Theme 1 Sensitivity', index=False)
+    pd.DataFrame(list(sensitivity_theme_2.items()), columns=['Variable', 'Spearman Correlation']).to_excel(writer, sheet_name='Theme 2 Sensitivity', index=False)
+    pd.DataFrame(list(sensitivity_theme_3.items()), columns=['Variable', 'Spearman Correlation']).to_excel(writer, sheet_name='Theme 3 Sensitivity', index=False)
+
+# Plotting the sensitivity analysis results
+def plot_sensitivity_results(sensitivity_results, theme_name):
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=list(sensitivity_results.keys()), y=list(sensitivity_results.values()))
+    plt.title(f'Sensitivity Analysis for {theme_name}')
+    plt.xlabel('Variable Left Out')
+    plt.ylabel('Spearman Correlation')
+    plt.xticks(rotation=45)
+    plt.show()
+
+# Plot sensitivity results for each theme
+plot_sensitivity_results(sensitivity_theme_1, "Theme 1")
+plot_sensitivity_results(sensitivity_theme_2, "Theme 2")
+plot_sensitivity_results(sensitivity_theme_3, "Theme 3")
+
+
+
+
+
