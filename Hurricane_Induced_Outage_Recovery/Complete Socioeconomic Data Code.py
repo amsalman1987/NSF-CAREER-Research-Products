@@ -9,7 +9,7 @@ import pandas as pd
 # ----------------------------------------------------
 # Step 1: Load the base county file (master file)
 # ----------------------------------------------------
-base_file = 'C:/Users/aas0041/Desktop/OutageData/AbrFileGeo.csv'
+base_file = # Define file path, county geographic data
 df = pd.read_csv(base_file, encoding='ISO-8859-1')
 
 # ----------------------------------------------------
@@ -48,7 +48,7 @@ merge_plan = [
     ('2022 service occp.csv',       ['Geographic Area', 'Service job'],                   'Geographic Area', 'Geographic Area'),
     ('2022 unit struc 2 or more.csv', ['Geographic Area', '2unit or more'],               'Geographic Area', 'Geographic Area'),
 ]
-svi_folder = 'C:/Users/aas0041/Desktop/Datasets/SVI AllCounty Data/'
+svi_folder = # Define file paths, files containing county socioeconomic characteristics
 
 for filename, cols, left_on, right_on in merge_plan:
     print(f"Merging: {filename}")
@@ -67,7 +67,7 @@ for filename, cols, left_on, right_on in merge_plan:
 # ----------------------------------------------------
 # Step 3.1: Merge Labor Data (Establishment, Employment, Total Wages)
 # ----------------------------------------------------
-labour_file = 'C:/Users/aas0041/Desktop/OutageData/XLabour data 2023.csv'
+labour_file = # Define file path
 labour_df = pd.read_csv(labour_file, encoding='ISO-8859-1')
 df = pd.merge(
     df,
@@ -80,7 +80,7 @@ df = pd.merge(
 # ----------------------------------------------------
 # Step 3.2: Merge GDP Data
 # ----------------------------------------------------
-gdp_file = 'C:/Users/aas0041/Desktop/OutageData/XGDP All 2022.csv'
+gdp_file = # Define file path
 gdp_df = pd.read_csv(gdp_file, encoding='ISO-8859-1')
 gdp_df['GeoFIPS'] = gdp_df['GeoFIPS'].str.replace('"', '').str.strip().astype('int64')
 df = pd.merge(
@@ -94,7 +94,7 @@ df = pd.merge(
 # ----------------------------------------------------
 # Step 3.3: Merge Critical Facilities Data (Education, Law Enforcement, Medical & Emergency) structures
 # ----------------------------------------------------
-critical_file = 'C:/Users/aas0041/Desktop/OutageData/XNational_structures_SpatialJoin_TableToExcel2.csv'
+critical_file = # Define file path
 crit_df = pd.read_csv(critical_file, encoding='ISO-8859-1', low_memory=False)
 
 # Define structure categories
@@ -131,7 +131,7 @@ df = pd.merge(
 # ----------------------------------------------------
 # Step 3.4: Merge Hurricane Risk Data (NRI risk scores)
 # ----------------------------------------------------
-risk_file = 'C:/Users/aas0041/Desktop/OutageData/NRI_Table_Counties.csv'
+risk_file = # Define file path
 risk_df = pd.read_csv(risk_file, encoding='ISO-8859-1')
 df = pd.merge(
     df,
@@ -145,7 +145,7 @@ df = pd.merge(
 # ----------------------------------------------------
 # Step 3.5: Merge Urban-Rural Codes (NCHSUR 2013 classification)
 # ----------------------------------------------------
-nchs_file = 'C:/Users/aas0041/Desktop/Datasets/SVI AllCounty Data/NCHSURCodes2013.csv'
+nchs_file = # Define file path
 nchs_df = pd.read_csv(nchs_file, encoding='ISO-8859-1')
 
 df = pd.merge(
@@ -198,7 +198,7 @@ filtered_df = df[
 # ----------------------------------------------------
 # Step 6: Save only the filtered states to a new CSV
 # ----------------------------------------------------
-filtered_df.to_csv('C:/Users/aas0041/Desktop/Journal Data/Compiled_Socioeconomic_Data.csv', index=False)
+filtered_df.to_csv('Compiled_Socioeconomic_Data.csv', index=False)
 print("Filtered data saved to 'Compiled_Socioeconomic_Data.csv'")
 
 
@@ -220,16 +220,17 @@ import pandas as pd
 # ----------------------------------------------------
 # Step 1: Define file paths and theme columns
 # ----------------------------------------------------
-file_paths = [
-    ('C:/Users/aas0041/Desktop/OutageData/Allnormalized_pareto_H_P_E themes.csv', 'All_SVI'),
-    ('C:/Users/aas0041/Desktop/OutageData/Allnormalized_pareto_H_P themes.csv', 'HealthPrep_SVI'),
-    ('C:/Users/aas0041/Desktop/OutageData/Allnormalized_pareto_H_E themes.csv', 'HealthEvac_SVI'),
-    ('C:/Users/aas0041/Desktop/OutageData/Allnormalized_pareto_P_E themes.csv', 'PrepEvac_SVI'),
-    ('C:/Users/aas0041/Desktop/OutageData/Allnormalized_pareto_H themes.csv', 'Health_SVI'),
-    ('C:/Users/aas0041/Desktop/OutageData/Allnormalized_pareto_P themes.csv', 'Prep_SVI'),
-    ('C:/Users/aas0041/Desktop/OutageData/Allnormalized_pareto_E themes.csv', 'Evac_SVI'),
+
+file_paths = [   # Define file paths, files containing the SVI values (columns)
+    ('C:/Users/Allnormalized_pareto_H_P_E themes.csv', 'All_SVI'),
+    ('C:/Users/Allnormalized_pareto_H_P themes.csv', 'HealthPrep_SVI'),
+    ('C:/Users/Allnormalized_pareto_H_E themes.csv', 'HealthEvac_SVI'),
+    ('C:/Users/Allnormalized_pareto_P_E themes.csv', 'PrepEvac_SVI'),
+    ('C:/Users/Allnormalized_pareto_H themes.csv', 'Health_SVI'),
+    ('C:/Users/Allnormalized_pareto_P themes.csv', 'Prep_SVI'),
+    ('C:/Users/Allnormalized_pareto_E themes.csv', 'Evac_SVI'),
 ]
-main_file = 'C:/Users/aas0041/Desktop/Journal Data/Compiled_Socioeconomic_Data.csv'
+main_file = # Define file path, this is file saved from the first code given above (Compiled_Socioeconomic_Data.csv)
 
 # ----------------------------------------------------
 # Step 2: Load the base DataFrame 
@@ -251,9 +252,10 @@ for file_path, column_name in file_paths:
 # ----------------------------------------------------
 # Step 4: Save the merged DataFrame
 # ----------------------------------------------------
-output_path = 'C:/Users/aas0041/Desktop/Journal Data/Complete_Socioeconomic_Data.csv'
+output_path = 'Complete_Socioeconomic_Data.csv'
 merged_df.to_csv(output_path, index=False)
 print("Merge completed and saved as 'Complete_Socioeconomic_Data.csv'")
+
 
 
 
