@@ -12,9 +12,9 @@ from plotly.colors import qualitative
 # ----------------------------------------------------
 # Step 1: Set file paths and CRS
 # ----------------------------------------------------
-hurricane_shapefile_dir = 'C:/Users/aas0041/Downloads/Hurricanes Path'
-county_shapefile_path = 'C:/Users/aas0041/Downloads/tl_2023_us_county/tl_2023_us_county.shp'
-state_shapefile_path = 'C:/Users/aas0041/Downloads/tl_2023_us_state/tl_2023_us_state.shp'
+hurricane_shapefile_dir = # Define file paths
+county_shapefile_path = # Define file paths
+state_shapefile_path = # Define file paths
 target_crs = "EPSG:4326"
 
 # ----------------------------------------------------
@@ -187,3 +187,4 @@ fig.update_layout(
 fig.write_html("Atlantic Hurricanes Tracks.html")
 fig.write_image("Atlantic Hurricanes Tracks.png", width=1600, height=1000, scale=2)
 fig.show()
+
