@@ -1,6 +1,6 @@
 
 
-# EXTRACT THE STORM ID AND THE RADII FROM HURRICANE DATA CSV FILES
+# EXTRACT THE STORM ID AND THE RADII (Wind speed) FROM HURRICANE DATA CSV FILES
 
 # -------------------------------
 # Step 1: Import required libraries
@@ -15,54 +15,20 @@ import pandas as pd
 
 # 2.1: Existing hurricane CSV file paths
 
-csv_file_paths = [
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Deltacounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Doriancounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Florencecounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Hannacounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Harveycounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Iancounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Idacounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Idaliacounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Irmacounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Isaiascounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Lauracounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Michaelcounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Nicholascounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Nicolecounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Sallycounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Zetacounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Berylcounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Debbycounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Miltoncounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Francinecounties_epsg5070.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Overlapped counties/overlapping_Helenecounties_epsg5070.csv',
+csv_file_paths = [ # Define file path, containing the hurricane wind speeds
+# e.g
+    'C:/Users/Delta_counties_Wind_Speed_epsg5070.csv',
+    'C:/Users/Dorian_counties_Wind_Speed_epsg5070.csv',
+    'C:/Users/Florence_counties_Wind_Speed_epsg5070.csv'
 ]
 
 # 2.2: Base file paths (Hurricane_RecoveryTimes.csv)
 
-base_file_paths = [
-    'C:/Users/aas0041/Desktop/eaglei_outages/Delta22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Dorian22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Florence22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Hanna22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Harvey22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Ian22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Ida22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Idalia22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Irma22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Isaias22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Laura22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Michael22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Nicholas22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Nicole22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Sally22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Zeta22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Beryl22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Debby22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Milton22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Francine22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Helene22x_RecoveryTimes.csv',
+base_file_paths = [  # Define file path, containing the hurricane power outage and recovery time data
+# e.g
+    'C:/Users/Delta22x_RecoveryTimes.csv',
+    'C:/Users/Dorian22x_RecoveryTimes.csv',
+    'C:/Users/Florence22x_RecoveryTimes.csv'
 ]
 
 # -------------------------------
@@ -83,7 +49,7 @@ for csv_path, base_path in zip(csv_file_paths, base_file_paths):
     # --- 3.4: Select only the required columns
     csv_df = csv_df[['fips_code', 'RADII', 'STORMID']]
     
-    # --- 3.5: For each fips_code, keep only the row with the highest RADII
+    # --- 3.5: For each fips_code, keep only the row with the highest RADII (Wind speed)
     csv_df = csv_df.loc[csv_df.groupby('fips_code')['RADII'].idxmax()]
     
     # --- 3.6: Merge the base file with the CSV data
@@ -100,7 +66,7 @@ for csv_path, base_path in zip(csv_file_paths, base_file_paths):
 
 
 
-# TAKE THE SAVED SWATH FILES AND RESAVE THEM WITH NEW NAME ADDING THE HURRICANE YEAR
+# TAKE THE SAVED SWATH FILES AND RESAVE THEM WITH NEW NAME ADDING THE HURRICANE YEAR (OBTAINED FROM THE STORM ID INFORMATION)
 
 # -------------------------------
 # Step 1: Import required libraries
@@ -143,7 +109,7 @@ for base_path in base_file_paths:
 
 
 
-# COMBINE ALL THE "HURRICANE + OUTAGE FILES" INTO ONE BIG FILE WITH THEIR CORRESPONDING HURRICANE AND YEAR COLUMNS
+# COMBINE ALL THE "HURRICANE + OUTAGE DATA FILES" OBTAINED FROM THE PREVIOUS CODES ABOVE INTO ONE BIG FILE AND EXTRACTING THEIR CORRESPONDING HURRICANE AND YEAR COLUMNS
 
 # -------------------------------
 # Step 1: Import required libraries
@@ -155,7 +121,7 @@ import re
 # -------------------------------
 # Step 2: Define file directory and regex pattern
 # -------------------------------
-swath_dir = 'C:/Users/aas0041/Desktop/eaglei_outages/'
+swath_dir = 'C:/Users/Desktop/eaglei_outages/'
 pattern = re.compile(r'([A-Za-z]+)22x_SwathData_(\d{4})\.csv')
 
 # -------------------------------
@@ -181,7 +147,7 @@ for filename in os.listdir(swath_dir):
 # Step 4: Concatenate and save combined DataFrame
 # -------------------------------
 combined_df = pd.concat(all_data, ignore_index=True)
-output_file = os.path.join(swath_dir, '00_2022_Combined_Hurricane_Data.csv')
+output_file = os.path.join(swath_dir, '00_Combined_Hurricane_Data.csv')
 combined_df.to_csv(output_file, index=False)
 
 print(f"Combined file saved: {output_file}")
@@ -204,8 +170,8 @@ import pandas as pd
 # -------------------------------
 # Step 2: Load data files
 # -------------------------------
-file1 = pd.read_csv('C:/Users/aas0041/Desktop/eaglei_outages/00_2022_Combined_Hurricane_Data.csv')
-file2 = pd.read_csv('C:/Users/aas0041/Desktop/Journal Data/Complete_Socioeconomic_Data.csv')
+file1 = pd.read_csv('C:/Users/00_Combined_Hurricane_Data.csv')
+file2 = pd.read_csv('C:/Users/Complete_Socioeconomic_Data.csv')
 
 # -------------------------------
 # Step 3: Preprocess file1 columns for merging
@@ -219,7 +185,7 @@ columns_to_merge = [
     'FIPS', 'POPESTIMATE2022', 'NAME', 'Geographic Area',
     'Establishment', 'Employment', 'Total Wages', 'GDP', 'Education_Count',
     'Law_Enforcement_Count', 'Medical_Emergency_Count', 'Median income', '2013 code',
-    'HRCN_RISKS', 'HRCN_RISKR', 'CFLD_RISKS', 'CFLD_RISKR', 'All_SVI', 
+    'HRCN_RISKS', 'HRCN_RISKR', 'All_SVI', 
     'HealthPrep_SVI', 'HealthEvac_SVI', 'PrepEvac_SVI', 'Health_SVI', 
     'Prep_SVI', 'Evac_SVI'
 ]
@@ -279,11 +245,11 @@ filtered_df['Wind_swath'] = filtered_df['RADII'].apply(classify_wind_swath)
 # Step 9: Save the final DataFrame
 # -------------------------------
 filtered_df.to_excel(
-    'C:/Users/aas0041/Desktop/eaglei_outages/01_2022_Combined_Hurricane_Data.xlsx',
+    'C:/Users/01_Combined_Hurricane_Data.xlsx',
     index=False
 )
 
-print("Processing completed. Updated file saved as '01_2022_Combined_Hurricane_Data.xlsx.'")
+print("Processing completed. Updated file saved as '01_Combined_Hurricane_Data.xlsx.'")
 
 
 
@@ -304,7 +270,7 @@ import pandas as pd
 # -------------------------------
 # Step 2: Load the input Excel file
 # -------------------------------
-file_path = 'C:/Users/aas0041/Desktop/eaglei_outages/01_2022_Combined_Hurricane_Data.xlsx'
+file_path = 'C:/Users/01_Combined_Hurricane_Data.xlsx'
 data = pd.read_excel(file_path, engine='openpyxl')
 
 # -------------------------------
@@ -345,7 +311,8 @@ for column in columns_to_scale:
 # -------------------------------
 # Step 7: Save the updated DataFrame to a new Excel file
 # -------------------------------
-output_file_path = 'C:/Users/aas0041/Desktop/eaglei_outages/02_2022_Combined_Hurricane_Data_Normalized.xlsx'
+output_file_path = 'C:/Users/02_Combined_Hurricane_Data_Normalized.xlsx'
 data.to_excel(output_file_path, index=False)
 
-print("Normalization and scaling completed, including 'Critical_facilities_Count', saved as '02_2022_Combined_Hurricane_Data_Normalized.xlsx'")
+print("Normalization and scaling completed, saved as '02_Combined_Hurricane_Data_Normalized.xlsx'")
+
