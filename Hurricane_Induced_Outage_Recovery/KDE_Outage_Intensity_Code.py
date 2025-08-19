@@ -14,7 +14,7 @@ from matplotlib.path import Path
 # ---------------------------------------------------------
 counties = (
     gpd.read_file(
-        'C:/Users/aas0041/Documents/ArcGIS/Projects/National structures/tl_rd22_us_county.shp'
+        # import county geographic shapefile
     )
     .to_crs(epsg=5070)
 )
@@ -23,7 +23,7 @@ counties = (
 # Step 2: Load Excel data with outage information
 # ---------------------------------------------------------
 data = pd.read_excel(
-    'C:/Users/aas0041/Desktop/eaglei_outages/02_2022_Combined_Hurricane_Data_Normalized.xlsx'
+    # import file containing the power outage and recovery time data
 )
 
 # ---------------------------------------------------------
@@ -68,7 +68,7 @@ zi = kde(np.vstack([xi.flatten(), yi.flatten()]))
 # ---------------------------------------------------------
 states = (
     gpd.read_file(
-        'C:/Users/aas0041/Downloads/tl_2023_us_state/tl_2023_us_state.shp'
+         # import state geographic shapefile
     )
     .to_crs(epsg=5070)
 )
@@ -130,3 +130,4 @@ ax.axis('off')
 # ---------------------------------------------------------
 plt.savefig('KDE_Outage_Intensity.png', dpi=300, bbox_inches='tight')
 plt.show()
+
