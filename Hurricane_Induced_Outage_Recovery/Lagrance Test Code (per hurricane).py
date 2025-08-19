@@ -80,10 +80,12 @@ def run_lm_tests(y, X, w, hurricane_name):
 # Step 2: Load and preprocess spatial and tabular data
 # -------------------------------
 # Step 2.1: Load shapefile
-counties = gpd.read_file('C:/Users/aas0041/Documents/ArcGIS/Projects/National structures/tl_rd22_us_county.shp')
+counties = gpd.read_file( # import county shapefile)
 counties = counties.to_crs(epsg=5070)
-data = pd.read_excel('C:/Users/aas0041/Desktop/eaglei_outages/02_2022_Combined_Hurricane_Data_Normalized.xlsx')
+    
+data = pd.read_excel( # import file containing the power outage and recovery time data)
 counties['FIPS'] = counties['FIPS'].astype(str)
+
 data['FIPS'] = data['FIPS'].astype(str)
 counties = counties.merge(data, on="FIPS")
 
@@ -204,3 +206,4 @@ for hurricane, w in hurricane_weights.items():
 
 print("\n LM Tests Completed.")
 output_file.close()
+
