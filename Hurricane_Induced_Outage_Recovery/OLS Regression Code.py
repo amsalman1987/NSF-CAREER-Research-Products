@@ -44,10 +44,12 @@ def custom_log_transform_elementwise(x):
 # Step 3: Load and preprocess data
 # -------------------------------
 
-counties = gpd.read_file('C:/Users/aas0041/Documents/ArcGIS/Projects/National structures/tl_rd22_us_county.shp')
+counties = gpd.read_file(# import county geographic shapefile)
 counties = counties.to_crs(epsg=5070)
-data = pd.read_excel('C:/Users/aas0041/Desktop/eaglei_outages/02_2022_Combined_Hurricane_Data_Normalized.xlsx')
+    
+data = pd.read_excel(# import power outage and recovery time data)
 counties['FIPS'] = counties['FIPS'].astype(str)
+
 data['FIPS'] = data['FIPS'].astype(str)
 counties = counties.merge(data, on="FIPS")
 
@@ -167,3 +169,4 @@ print_and_save(f" Robust LM Error Test Statistic: {lm_results.rlme[0]:.4f}, p-va
 # -------------------------------
 print("\n All processing complete. Output has been saved to the output file.")
 output_file.close()
+
