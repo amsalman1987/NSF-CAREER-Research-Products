@@ -17,34 +17,17 @@ from esda.moran import Moran
 # -------------------------------
 # Step 2: Load the county shapefile
 # -------------------------------
-counties_shapefile = 'C:/Users/aas0041/Documents/ArcGIS/Projects/National structures/tl_rd22_us_county.shp'
+counties_shapefile = # import county geographic shapefile
 counties = gpd.read_file(counties_shapefile)
 
 # -------------------------------
 # Step 3: Define list of CSV files (one per hurricane)
 # -------------------------------
-csv_files = [
-    'C:/Users/aas0041/Desktop/eaglei_outages/Delta22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Dorian22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Florence22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Hanna22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Harvey22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Ian22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Ida22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Idalia22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Irma22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Isaias22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Laura22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Michael22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Nicholas22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Nicole22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Sally22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Zeta22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Beryl22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Debby22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Milton22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Francine22x_RecoveryTimes.csv',
-    'C:/Users/aas0041/Desktop/eaglei_outages/Helene22x_RecoveryTimes.csv',
+csv_files = [ # import power outage and recovery time data
+# e.g
+    'C:/Users/Delta22x_RecoveryTimes.csv',
+    'C:/Users/Dorian22x_RecoveryTimes.csv',
+    'C:/Users/Florence22x_RecoveryTimes.csv',
 ]
 
 # -------------------------------
@@ -214,6 +197,7 @@ for i in range(heatmap_df.shape[0]):  # rows (hurricanes)
 plt.tight_layout()
 plt.savefig("Morans I_Heatmap.png", dpi=300, bbox_inches='tight')
 plt.show()
+
 
 
 
