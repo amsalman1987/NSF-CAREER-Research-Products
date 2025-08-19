@@ -8,8 +8,8 @@ import geopandas as gpd
 # --------------------------------------------------------
 # Step 1: Load the county and wind swath shapefiles
 # --------------------------------------------------------
-counties = gpd.read_file('C:/Users/aas0041/Downloads/tl_2023_us_county/tl_2023_us_county.shp')
-wind_swath = gpd.read_file('C:/Users/aas0041/Downloads/al092020_best_track/AL092020_windswath.shp')
+counties = gpd.read_file('C:/Users/tl_2023_us_county/tl_2023_us_county.shp')
+wind_swath = gpd.read_file('C:/Users/al092020_best_track/AL092020_windswath.shp')
 
 # --------------------------------------------------------
 # Step 2: Select only relevant columns from counties
@@ -31,12 +31,13 @@ overlapping_counties = gpd.overlay(counties, wind_swath, how="intersection")
 # Step 5: Save results as a shapefile and as a CSV (attributes only)
 # --------------------------------------------------------
 overlapping_counties.to_file("Beryl_Wind_Speed_epsg5070.shp")
-overlapping_counties.drop(columns="geometry").to_csv("overlapping_cccounties_epsg5070.csv", index=False)
+overlapping_counties.drop(columns="geometry").to_csv("Beryl_Wind_Speed_epsg5070.csv", index=False)
 
 # --------------------------------------------------------
 # Step 6: Print the first few rows to verify output
 # --------------------------------------------------------
 print(overlapping_counties.head())
+
 
 
 
