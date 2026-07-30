@@ -1299,7 +1299,7 @@ def all_networks_temporal_holdout(csv_file,
         'avg_pipe_diameter', 'std_pipe_diameter', 'total_pipe_length',
         'avg_pipe_roughness', 'avg_demand', 'peak_demand',
         'avg_clustering', 'algebraic_connectivity', 'spectral_gap',
-        'num_failed_pipes', 'total_leak_area', 'avg_failure_duration',
+         'total_leak_area', 'avg_failure_duration',
         'num_major_failures', 'num_minor_failures', 'failure_density',
         'simulation_year', 'failure_multiplier',
         'avg_pressure', 'pressure_deficit', 'avg_todini_index'
